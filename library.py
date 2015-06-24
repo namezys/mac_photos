@@ -53,6 +53,7 @@ class Library(object):
         self.image_proxies_db = sqlite3.connect(os.path.join(self.path, self.IMAGE_PROXIES))
 
         self.top_folder = Folder(TOP_LEVEL_FOLDER, "Top level")
+        self.library_folder = Folder(LIBRARY_FOLDER, "Library folder")
 
     def get_adjustment(self, adjustment):
         cursor = self.image_proxies_db.cursor()
@@ -108,7 +109,18 @@ class Library(object):
         """
         logger.info("Fetch %s content", album)
         cursor = self.library_db.cursor()
-        cursor.execute("""SELECT v.uuid, v.name,
+        if album.uuid == "allPhotosAlbum":
+            cursor.execute("""SELECT DISTINCT v.uuid, v.name,
+                v.imageDate, v.imageTimeZoneName,
+                v.extendedDescription,
+                m.imagePath, v.adjustmentUuid,
+                v.modelId
+            FROM RKAlbumVersion AS av
+            JOIN RKAlbum AS a ON a.modelId = av.albumId
+            JOIN RKVersion AS v ON v.modelId = av.versionId
+            JOIN RKMaster AS m ON m.uuid = v.masterUuid""")
+        else:
+            cursor.execute("""SELECT v.uuid, v.name,
                 v.imageDate, v.imageTimeZoneName,
                 v.extendedDescription,
                 m.imagePath, v.adjustmentUuid,

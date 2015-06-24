@@ -21,12 +21,13 @@ def print_photo(photo):
     print "\tid:", photo.id, "uuid:", photo.uuid
 
 
-def print_folder(folder, library, offset):
+def print_folder(folder, library, offset, deep=None):
     folders = list(library.fetch_subfolders(folder))
     albums = list(library.fetch_albums(folder))
     for f in folders:
         print offset, "folder '%s': uid=%s" % (f.name, f.uuid)
-        print_folder(f, library, offset + "\t")
+        if deep is None or deep > 1:
+            print_folder(f, library, offset + "\t", deep and (deep - 1))
     for a in albums:
         print offset, "album '%s': uid=%s" % (a.name, a.uuid)
 
@@ -39,6 +40,7 @@ def main():
     action_gr = parser.add_argument_group("Actions")
     action_gr.add_argument("--photos", action="store_true", help="List all photos in library")
     action_gr.add_argument("--tree", action="store_true", help="List all folder and albums")
+    action_gr.add_argument("--lib-folder", action="store_true", help="List all system library folder")
     action_gr.add_argument("--album", help="List photos in album")
 
     parser.add_argument("--log-level",
@@ -58,6 +60,9 @@ def main():
     if args.tree:
         print "Tree:"
         print_folder(library.top_folder, library, "\t")
+
+    if args.lib_folder:
+        print_folder(library.library_folder, library, "", 1)
 
     if args.album:
         for photo in library.fetch_album_photos(library.album(args.album)):
