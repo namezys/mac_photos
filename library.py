@@ -54,9 +54,9 @@ class Library(object):
 
         self.top_folder = Folder(TOP_LEVEL_FOLDER, "Top level")
         self.library_folder = Folder(LIBRARY_FOLDER, "Library folder")
-        self.all_photos_album = Album("allPhotosAlbum", "Photos")
-        self.last_import_album = Album("lastImportAlbum", "Last import")
-        self.favorites = Album("favoritesAlbum", "Favorites")
+        self.all_photos_album = self.album("allPhotosAlbum")
+        self.last_import_album = self.album("lastImportAlbum")
+        self.favorites = self.album("favoritesAlbum")
 
     def get_adjustment(self, adjustment):
         cursor = self.image_proxies_db.cursor()
@@ -78,8 +78,9 @@ class Library(object):
                      thumbnails=thumbnails(orig_path_db, uuid), id=id)
 
     def album(self, uuid):
-        cursor = self.library_db.execute("SELECT name FROM RKAlbum WHERE uuid = ?", [uuid])
-        return Album(uuid, cursor.fetchone()[0])
+        cursor = self.library_db.execute("SELECT name, modelId FROM RKAlbum WHERE uuid = ?", [uuid])
+        name, album_id = cursor.fetchone()
+        return Album(uuid, name=name, album_id=album_id)
 
     def fetch_subfolders(self, folder):
         """Get subfolder of given folder
@@ -99,11 +100,11 @@ class Library(object):
         """
         logger.info("Fetch albums of %s", folder)
         logger.debug("Get albums")
-        cursor = self.library_db.execute("SELECT uuid, name FROM RKAlbum WHERE name NOT NULL AND folderUuid = ?",
+        cursor = self.library_db.execute("SELECT uuid, name, modelId FROM RKAlbum WHERE name NOT NULL AND folderUuid = ?",
                                          [folder.uuid])
-        for uuid, name in cursor:
+        for uuid, name, album_id in cursor:
             logger.debug("Got album %s (%s)", name, uuid)
-            yield Album(uuid, name)
+            yield Album(uuid, name, album_id)
 
     def fetch_album_photo_id_list(self, album):
         logger.info("Fetch photo ids of %s", album)
