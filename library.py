@@ -62,7 +62,7 @@ class Library(object):
         p2 = str(ord(uuid[1]))
         return os.path.join("resources/modelresources", p1, p2, uuid, filename)
 
-    def _photo(self, uuid, name, data_ts, date_tz, description, orig_path_db, adjustment):
+    def _photo(self, uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id):
         logger.debug("Got photo %s (%s)", name, uuid)
         date = datetime.datetime.fromtimestamp(data_ts - 3600, tz(date_tz)) + TIME_OFFSET
         orig_path = os.path.join("Masters", orig_path_db)
@@ -71,7 +71,7 @@ class Library(object):
         else:
             path = self.get_adjustment(adjustment)
         return Photo(uuid, name=name, description=description, date=date, path=path, originalPath=orig_path,
-                     thumbnails=thumbnails(orig_path_db, uuid))
+                     thumbnails=thumbnails(orig_path_db, uuid), id=id)
 
     def album(self, uuid):
         cursor = self.library_db.execute("SELECT name FROM RKAlbum WHERE uuid = ?", [uuid])
@@ -111,14 +111,15 @@ class Library(object):
         cursor.execute("""SELECT v.uuid, v.name,
                 v.imageDate, v.imageTimeZoneName,
                 v.extendedDescription,
-                m.imagePath, v.adjustmentUuid
+                m.imagePath, v.adjustmentUuid,
+                v.modelId
             FROM RKAlbumVersion AS av
             JOIN RKAlbum AS a ON a.modelId = av.albumId
             JOIN RKVersion AS v ON v.modelId = av.versionId
             JOIN RKMaster AS m ON m.uuid = v.masterUuid
             WHERE a.uuid = ?""", [album.uuid])
-        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment in cursor:
-            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment)
+        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id in cursor:
+            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id)
 
     def fetch_photos(self):
         """Get photos
@@ -128,9 +129,10 @@ class Library(object):
         cursor.execute("""SELECT v.uuid, v.name,
                 v.imageDate, v.imageTimeZoneName,
                 v.extendedDescription,
-                m.imagePath, v.adjustmentUuid
+                m.imagePath, v.adjustmentUuid,
+                v.modelId
             FROM RKVersion AS v
             JOIN RKMaster AS m ON m.uuid = v.masterUuid
             WHERE NOT v.isInTrash""")
-        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment in cursor:
-            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment)
+        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id in cursor:
+            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id)

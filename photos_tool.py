@@ -18,6 +18,7 @@ def print_photo(photo):
     for t, p in photo.thumbnails.items():
         print "\t\t%s:" % t, p
     print "\tdate:", photo.date
+    print "\tid:", photo.id, "uuid:", photo.uuid
 
 
 def print_folder(folder, library, offset):

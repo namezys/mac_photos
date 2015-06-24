@@ -15,7 +15,8 @@ class Photo(object):
                  originalPath=None,
                  description=None,
                  date=None,
-                 thumbnails=None):
+                 thumbnails=None,
+                 id=None):
         self.uuid = uuid
         self.name = name
         self.path = path
@@ -23,6 +24,7 @@ class Photo(object):
         self.date = date
         self.description = description
         self.thumbnails = thumbnails
+        self.id = id
 
     def __eq__(self, other):
         return self.uuid == other.uuid
