@@ -7,6 +7,8 @@ import copy
 from argparse import ArgumentParser
 
 from library import Library
+from album import Album
+from folder import Folder
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,14 @@ BASE = {
 ARCHIVE_PATH = "Archive Path"
 ALBUMS = "List of Albums"
 IMAGES = "Master Image List"
+ALBUMS = "List of Albums"
+
+
+def _iphoto_id(obj):
+    if isinstance(obj, Album):
+        return obj.album_id
+    if isinstance(obj, Folder):
+        return obj.folder_id * 10000
 
 
 class AlbumData(object):
@@ -32,9 +42,21 @@ class AlbumData(object):
         self.library = Library(db_path)
         self.data[ARCHIVE_PATH] = self.path
 
+        self.photos = dict()
+
+        self.albums_list = dict()
+
     def build(self):
+        self.photos = dict((p.id, p) for p in self.library.fetch_photos())
         self.walk_through_tree(self.library.top_folder)
-        self.data[IMAGES] = dict((str(p.id), self._photo(p)) for p in self.library.fetch_photos())
+
+        logger.debug("Save albums")
+
+        albums = [self._all_photos_album, self._flagged_album]
+
+        self.data[ALBUMS] = albums
+
+        self.data[IMAGES] = dict((str(p.id), self._photo(p)) for p in self.photos.values())
 
     def walk_through_tree(self, folder):
         logger.info("Process %s", folder)
@@ -44,10 +66,42 @@ class AlbumData(object):
         for folder in self.library.fetch_subfolders(folder):
             self.walk_through_tree(folder)
 
+    @property
+    def _all_photos_album(self):
+        album = self.library.all_photos_album
+        data = self._album_base(album, album_type="99", name="Photos")
+        data["Master"] = True
+        return data
+
+    @property
+    def _flagged_album(self):
+        album = self.library.favorites
+        return self._album_base(album, album_type="Flagged", name="Flagged", sort_order="1")
+
+    @property
+    def _last_imported_album(self):
+        album = self.library.last_import_album
+        return self._album_base(album)
+
+    def _album_base(self, album, name=None, album_type="Regular", sort_order=None):
+        keys = list(str(k) for k in self.library.fetch_album_photo_id_list(album))
+        data = {
+            "AlbumId": _iphoto_id(album),
+            "AlbumName": name or album.name,
+            "GUID": album.uuid,
+            "Master": True,
+            "KeyList": keys,
+            "PhotoCount": len(keys),
+            "Album Type": album_type
+        }
+        if sort_order:
+            data["Sort Order"] = sort_order
+        return data
+
     def _photo(self, photo):
         return {
-            "Caption": photo.name,
-            "Comment": photo.description,
+            "Caption": photo.name or "",
+            "Comment": photo.description or "",
             "GUID": photo.uuid,
             "Roll": 0, # TODO:
             "Rating": 0, # TODO: Fetch rating
