@@ -54,6 +54,9 @@ class Library(object):
 
         self.top_folder = Folder(TOP_LEVEL_FOLDER, "Top level")
         self.library_folder = Folder(LIBRARY_FOLDER, "Library folder")
+        self.all_photos_album = Album("allPhotosAlbum", "Photos")
+        self.last_import_album = Album("lastImportAlbum", "Last import")
+        self.favorites = Album("favoritesAlbum", "Favorites")
 
     def get_adjustment(self, adjustment):
         cursor = self.image_proxies_db.cursor()
@@ -102,36 +105,16 @@ class Library(object):
             logger.debug("Got album %s (%s)", name, uuid)
             yield Album(uuid, name)
 
-    def fetch_album_photos(self, album):
-        """Get album content
-
-        :param album:
-        """
-        logger.info("Fetch %s content", album)
-        cursor = self.library_db.cursor()
-        if album.uuid == "allPhotosAlbum":
-            cursor.execute("""SELECT DISTINCT v.uuid, v.name,
-                v.imageDate, v.imageTimeZoneName,
-                v.extendedDescription,
-                m.imagePath, v.adjustmentUuid,
-                v.modelId
-            FROM RKAlbumVersion AS av
-            JOIN RKAlbum AS a ON a.modelId = av.albumId
-            JOIN RKVersion AS v ON v.modelId = av.versionId
-            JOIN RKMaster AS m ON m.uuid = v.masterUuid""")
+    def fetch_album_photo_id_list(self, album):
+        logger.info("Fetch photo ids of %s", album)
+        if album == self.all_photos_album:
+            cursor = self.library_db.execute("SELECT DISTINCT versionId FROM RKAlbumVersion")
         else:
-            cursor.execute("""SELECT v.uuid, v.name,
-                v.imageDate, v.imageTimeZoneName,
-                v.extendedDescription,
-                m.imagePath, v.adjustmentUuid,
-                v.modelId
-            FROM RKAlbumVersion AS av
-            JOIN RKAlbum AS a ON a.modelId = av.albumId
-            JOIN RKVersion AS v ON v.modelId = av.versionId
-            JOIN RKMaster AS m ON m.uuid = v.masterUuid
-            WHERE a.uuid = ?""", [album.uuid])
-        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id in cursor:
-            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id)
+            cursor = self.library_db.execute("""SELECT av.versionId
+                FROM RKAlbumVersion AS av
+                JOIN RKAlbum AS a ON a.modelId = av.albumId
+                WHERE a.uuid = ?""", [album.uuid])
+        return (row[0] for row in cursor)
 
     def fetch_photos(self):
         """Get photos

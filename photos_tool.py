@@ -65,8 +65,9 @@ def main():
         print_folder(library.library_folder, library, "", 1)
 
     if args.album:
-        for photo in library.fetch_album_photos(library.album(args.album)):
-            print_photo(photo)
+        photos = dict((p.id, p) for p in library.fetch_photos())
+        for photo_id in library.fetch_album_photo_id_list(library.album(args.album)):
+            print_photo(photos[photo_id])
 
 if __name__ == "__main__":
     main()
