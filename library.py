@@ -133,11 +133,12 @@ class Library(object):
         if album == self.all_photos_album:
             cursor = self.library_db.execute("SELECT DISTINCT versionId FROM RKAlbumVersion")
         else:
+            # TODO: append video
             cursor = self.library_db.execute("""SELECT av.versionId
                 FROM RKAlbumVersion AS av
                 JOIN RKAlbum AS a ON a.modelId = av.albumId
                 JOIN RKVersion AS v
-                WHERE NOT v.isInTrash AND a.uuid = ?""", [album.uuid])
+                WHERE NOT v.isInTrash AND v.type = 2 AND a.uuid = ?""", [album.uuid])
         return (row[0] for row in cursor)
 
     def fetch_photos(self):
@@ -153,7 +154,7 @@ class Library(object):
                 v.modelId
             FROM RKVersion AS v
             JOIN RKMaster AS m ON m.uuid = v.masterUuid
-            WHERE NOT v.isInTrash""")
+            WHERE NOT v.isInTrash AND v.type = 2""")
         for uuid, name, data_ts, change_ts, change_meta_ts, date_tz, tz_offset,\
                 description, favorite, orig_path_db, adjustment, photo_id in cursor:
             yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, photo_id,
