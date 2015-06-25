@@ -85,7 +85,8 @@ class Library(object):
         """
         logger.info("Fetch subfolders of %s", folder)
         cursor = self.library_db.execute("""SELECT uuid, name, modelId
-                                            FROM RKFolder WHERE parentFolderUuid = ?""", [folder.uuid])
+                                            FROM RKFolder
+                                            WHERE NOT isInTrash AND parentFolderUuid = ?""", [folder.uuid])
         for uuid, name, folder_id in cursor:
             logger.debug("Got folder %s (%s)", name, uuid)
             yield Folder(uuid, name, folder_id=folder_id)
@@ -98,7 +99,7 @@ class Library(object):
         logger.info("Fetch albums of %s", folder)
         logger.debug("Get albums")
         cursor = self.library_db.execute("""SELECT uuid, name, modelId FROM RKAlbum
-                                            WHERE name NOT NULL AND folderUuid = ?""",
+                                            WHERE NOT isInTrash AND name NOT NULL AND folderUuid = ?""",
                                          [folder.uuid])
         for uuid, name, album_id in cursor:
             logger.debug("Got album %s (%s)", name, uuid)
@@ -112,7 +113,8 @@ class Library(object):
             cursor = self.library_db.execute("""SELECT av.versionId
                 FROM RKAlbumVersion AS av
                 JOIN RKAlbum AS a ON a.modelId = av.albumId
-                WHERE a.uuid = ?""", [album.uuid])
+                JOIN RKVersion AS v
+                WHERE NOT v.isInTrash AND a.uuid = ?""", [album.uuid])
         return (row[0] for row in cursor)
 
     def fetch_photos(self):
