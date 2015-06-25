@@ -71,12 +71,13 @@ class AlbumData(object):
     def save_folder(self, folder, parent):
         photo_ids = set()
         if folder != self.library.top_folder:
-            data = self._album_base(folder, [], parent=(parent if parent != self.library.top_folder else None))
+            data = self._album_base(folder, [], parent=None)
             self.data[ALBUMS].append(data)
+        parent = (folder if folder != self.library.top_folder else None)
         for sub_folder in self.library.fetch_subfolders(folder):
-            photo_ids |= self.save_folder(sub_folder, folder)
+            photo_ids |= self.save_folder(sub_folder, parent)
         for album in self.library.fetch_albums(folder):
-            photo_ids |= self.save_album(album, folder)
+            photo_ids |= self.save_album(album, parent)
         if folder != self.library.top_folder:
             self._append_photos(data, photo_ids)
         logger.debug("Got %s photos for %s", len(photo_ids), folder)

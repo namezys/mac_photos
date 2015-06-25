@@ -58,7 +58,7 @@ def main():
     logging.basicConfig(format='%(message)s',
                         level=getattr(logging, args.log_level))
 
-    library = Library(args.db_path, true)
+    library = Library(args.db_path, True)
 
     if args.photos:
         for photo in library.fetch_photos():
