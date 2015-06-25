@@ -36,7 +36,7 @@ def print_folder(folder, library, offset, deep=None):
         if deep is None or deep > 1:
             print_folder(f, library, offset + "\t", deep and (deep - 1))
     for a in albums:
-        print offset, "album '%s': uid=%s" % (a.name, a.uuid)
+        print offset, "album '%s': uid=%s, poster=%d" % (a.name, a.uuid, a.poster_id)
 
 
 

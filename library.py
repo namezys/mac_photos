@@ -69,9 +69,11 @@ class Library(object):
                      is_favorite=bool(favorite))
 
     def album(self, uuid):
-        cursor = self.library_db.execute("SELECT name, modelId FROM RKAlbum WHERE uuid = ?", [uuid])
-        name, album_id = cursor.fetchone()
-        return Album(uuid, name=name, album_id=album_id)
+        cursor = self.library_db.execute("""SELECT name, modelId,
+                                                (SELECT modelId FROM RKVersion WHERE uuid = a.posterVersionUuid)
+                                            FROM RKAlbum AS a WHERE uuid = ?""", [uuid])
+        name, album_id, poster_id = cursor.fetchone()
+        return Album(uuid, name=name, album_id=album_id, poster_id=poster_id)
 
     def folder(self, uuid):
         cursor = self.library_db.execute("SELECT name, modelId FROM RKFolder WHERE uuid = ?", [uuid])
@@ -98,14 +100,16 @@ class Library(object):
         """
         logger.info("Fetch albums of %s", folder)
         logger.debug("Get albums")
-        cursor = self.library_db.execute("""SELECT uuid, name, modelId FROM RKAlbum AS a
+        cursor = self.library_db.execute("""SELECT uuid, name, modelId,
+                                                (SELECT modelId FROM RKVersion WHERE uuid = a.posterVersionUuid)
+                                            FROM RKAlbum AS a
                                             WHERE NOT isInTrash AND name NOT NULL
                                                 AND NOT EXISTS(SELECT * FROM RKFolder WHERE implicitAlbumUuid = a.uuid)
                                                 AND folderUuid = ?""",
                                          [folder.uuid])
-        for uuid, name, album_id in cursor:
+        for uuid, name, album_id, poster_id in cursor:
             logger.debug("Got album %s (%s)", name, uuid)
-            yield Album(uuid, name, album_id)
+            yield Album(uuid, name, album_id, poster_id=poster_id)
 
     def fetch_album_photo_id_list(self, album):
         logger.info("Fetch photo ids of %s", album)

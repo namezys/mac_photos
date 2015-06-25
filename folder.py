@@ -14,6 +14,7 @@ class Folder(object):
         self.name = name
         self.uuid = uuid
         self.id = folder_id
+        self.poster_id = None
 
     def __repr__(self):
         return "Folder(%r, %r)" % (self.uuid, self.name)

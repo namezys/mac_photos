@@ -125,6 +125,8 @@ class AlbumData(object):
             "GUID": album.uuid,
             "Album Type": album_type
         }
+        if album.poster_id:
+            data["KeyPhotoKey"] = str(album.poster_id)
         if sort_order:
             data["Sort Order"] = sort_order
         if parent:
