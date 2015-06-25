@@ -98,8 +98,10 @@ class Library(object):
         """
         logger.info("Fetch albums of %s", folder)
         logger.debug("Get albums")
-        cursor = self.library_db.execute("""SELECT uuid, name, modelId FROM RKAlbum
-                                            WHERE NOT isInTrash AND name NOT NULL AND folderUuid = ?""",
+        cursor = self.library_db.execute("""SELECT uuid, name, modelId FROM RKAlbum AS a
+                                            WHERE NOT isInTrash AND name NOT NULL
+                                                AND NOT EXISTS(SELECT * FROM RKFolder WHERE implicitAlbumUuid = a.uuid)
+                                                AND folderUuid = ?""",
                                          [folder.uuid])
         for uuid, name, album_id in cursor:
             logger.debug("Got album %s (%s)", name, uuid)

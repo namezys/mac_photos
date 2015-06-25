@@ -68,13 +68,15 @@ class AlbumData(object):
 
     def save_folder(self, folder, parent):
         photo_ids = set()
-        data = self._album_base(folder, [], parent=(parent if parent != self.library.top_folder else None))
-        self.data[ALBUMS].append(data)
+        if folder != self.library.top_folder:
+            data = self._album_base(folder, [], parent=(parent if parent != self.library.top_folder else None))
+            self.data[ALBUMS].append(data)
         for sub_folder in self.library.fetch_subfolders(folder):
             photo_ids |= self.save_folder(sub_folder, folder)
         for album in self.library.fetch_albums(folder):
             photo_ids |= self.save_album(album, folder)
-        self._append_photos(data, photo_ids)
+        if folder != self.library.top_folder:
+            self._append_photos(data, photo_ids)
         logger.debug("Got %s photos for %s", len(photo_ids), folder)
         return photo_ids
 
@@ -121,7 +123,6 @@ class AlbumData(object):
             "AlbumId": _iphoto_id(album),
             "AlbumName": name or album.name,
             "GUID": album.uuid,
-            "Master": True,
             "Album Type": album_type
         }
         if sort_order:
