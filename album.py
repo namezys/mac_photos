@@ -11,7 +11,7 @@ class Album(object):
     def __init__(self, uuid, name, album_id):
         self.uuid = uuid
         self.name = name
-        self.album_id = album_id
+        self.id = album_id
 
     def __repr__(self):
         return "Album(%r, %r)" % (self.uuid, self.name)
