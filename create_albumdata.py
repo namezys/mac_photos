@@ -107,10 +107,10 @@ class AlbumData(object):
             "Rating": 0, # TODO: Fetch rating
             "ImagePath": os.path.join(self.path, photo.path),
             "MediaType": "Image",
-            "ModDateAsTimerInterval": 0.0,
-            "MetaModDateAsTimerInterval": 0.0,
-            "DateAsTimerInterval": 0.0,
-            "DateAsTimerIntervalGMT": 0.0,
+            "ModDateAsTimerInterval": photo.export_image_change_date_ts,
+            "MetaModDateAsTimerInterval": photo.export_metadata_change_date_ts,
+            "DateAsTimerInterval": photo.image_date_ts,
+            "DateAsTimerIntervalGMT": photo.image_data_gmt_ts,
             "OriginalPath": os.path.join(self.path, photo.original),
             "ThumbPath": os.path.join(self.path, photo.thumbnails["mini"])
         }
