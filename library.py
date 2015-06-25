@@ -1,7 +1,5 @@
 __author__ = 'namezys'
 
-import datetime
-import pytz
 import os
 import sqlite3
 
@@ -14,21 +12,10 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-TIME_OFFSET = datetime.timedelta(11323)
 UNADJUSTED = "UNADJUSTEDNONRAW"
 
 LIBRARY_FOLDER = "LibraryFolder"
 TOP_LEVEL_FOLDER = "TopLevelAlbums"
-
-
-def tz(tzname):
-    if not tzname:
-        return None
-    try:
-        return pytz.timezone(tzname)
-    except pytz.UnknownTimeZoneError:
-        logger.exception("Can't found time zone")
-        return None
 
 
 def thumbnails(path, uid):
@@ -66,16 +53,19 @@ class Library(object):
         p2 = str(ord(uuid[1]))
         return os.path.join("resources/modelresources", p1, p2, uuid, filename)
 
-    def _photo(self, uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id):
+    def _photo(self, uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, photo_id,
+               change_ts, change_meta_ts, tz_offset):
         logger.debug("Got photo %s (%s)", name, uuid)
-        date = datetime.datetime.fromtimestamp(data_ts - 3600, tz(date_tz)) + TIME_OFFSET
         orig_path = os.path.join("Masters", orig_path_db)
         if adjustment == UNADJUSTED:
             path = orig_path
         else:
             path = self.get_adjustment(adjustment)
-        return Photo(uuid, name=name, description=description, date=date, path=path, originalPath=orig_path,
-                     thumbnails=thumbnails(orig_path_db, uuid), id=id)
+        return Photo(uuid, name=name, description=description,
+                     image_date_ts=data_ts, time_zone=date_tz, time_zone_offset=tz_offset,
+                     path=path, original_path=orig_path,
+                     thumbnails=thumbnails(orig_path_db, uuid), photo_id=photo_id,
+                     export_image_change_date_ts=change_ts, export_metadata_change_date_ts=change_meta_ts)
 
     def album(self, uuid):
         cursor = self.library_db.execute("SELECT name, modelId FROM RKAlbum WHERE uuid = ?", [uuid])
@@ -100,7 +90,8 @@ class Library(object):
         """
         logger.info("Fetch albums of %s", folder)
         logger.debug("Get albums")
-        cursor = self.library_db.execute("SELECT uuid, name, modelId FROM RKAlbum WHERE name NOT NULL AND folderUuid = ?",
+        cursor = self.library_db.execute("""SELECT uuid, name, modelId FROM RKAlbum
+                                            WHERE name NOT NULL AND folderUuid = ?""",
                                          [folder.uuid])
         for uuid, name, album_id in cursor:
             logger.debug("Got album %s (%s)", name, uuid)
@@ -123,12 +114,15 @@ class Library(object):
         logger.info("Fetch phtoos")
         cursor = self.library_db.cursor()
         cursor.execute("""SELECT v.uuid, v.name,
-                v.imageDate, v.imageTimeZoneName,
+                v.imageDate, v.exportImageChangeDate, v.exportMetadataChangeDate,
+                v.imageTimeZoneName, v.imageTimeZoneOffsetSeconds,
                 v.extendedDescription,
                 m.imagePath, v.adjustmentUuid,
                 v.modelId
             FROM RKVersion AS v
             JOIN RKMaster AS m ON m.uuid = v.masterUuid
             WHERE NOT v.isInTrash""")
-        for uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id in cursor:
-            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, id)
+        for uuid, name, data_ts, change_ts, change_meta_ts, date_tz, tz_offset,\
+                description, orig_path_db, adjustment, photo_id in cursor:
+            yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, photo_id,
+                              change_ts, change_meta_ts, tz_offset)

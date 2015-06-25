@@ -19,6 +19,12 @@ def print_photo(photo):
         print "\t\t%s:" % t, p
     print "\tdate:", photo.date
     print "\tid:", photo.id, "uuid:", photo.uuid
+    print "\ttime stamps:"
+    print "\t\ttime zone offset:", photo.time_zone_offset, "\tname:", photo.time_zone
+    print "\t\timage:", photo.image_date_ts
+    print "\t\timage gmt:", photo.image_data_gmt_ts
+    print "\t\tchange:", photo.export_image_change_date_ts
+    print "\t\tchange metadata:", photo.export_metadata_change_date_ts
 
 
 def print_folder(folder, library, offset, deep=None):
