@@ -10,9 +10,10 @@ class Folder(object):
     :ivar albums: set of albums
     """
 
-    def __init__(self, uuid, name=None):
+    def __init__(self, uuid, name=None, folder_id=None):
         self.name = name
         self.uuid = uuid
+        self.id = folder_id
 
     def __repr__(self):
         return "Folder(%r, %r)" % (self.uuid, self.name)

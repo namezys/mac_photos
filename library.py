@@ -39,8 +39,8 @@ class Library(object):
         self.library_db = sqlite3.connect(os.path.join(self.path, self.LIBRARY_DB))
         self.image_proxies_db = sqlite3.connect(os.path.join(self.path, self.IMAGE_PROXIES))
 
-        self.top_folder = Folder(TOP_LEVEL_FOLDER, "Top level")
-        self.library_folder = Folder(LIBRARY_FOLDER, "Library folder")
+        self.top_folder = self.folder(TOP_LEVEL_FOLDER)
+        self.library_folder = self.folder(LIBRARY_FOLDER)
         self.all_photos_album = self.album("allPhotosAlbum")
         self.last_import_album = self.album("lastImportAlbum")
         self.favorites = self.album("favoritesAlbum")
@@ -73,16 +73,22 @@ class Library(object):
         name, album_id = cursor.fetchone()
         return Album(uuid, name=name, album_id=album_id)
 
+    def folder(self, uuid):
+        cursor = self.library_db.execute("SELECT name, modelId FROM RKFolder WHERE uuid = ?", [uuid])
+        name, folder_id = cursor.fetchone()
+        return Folder(uuid, name=name, folder_id=folder_id)
+
     def fetch_subfolders(self, folder):
         """Get subfolder of given folder
 
         :param folder:
         """
         logger.info("Fetch subfolders of %s", folder)
-        cursor = self.library_db.execute("SELECT uuid, name FROM RKFolder WHERE parentFolderUuid = ?", [folder.uuid])
-        for uuid, name in cursor:
+        cursor = self.library_db.execute("""SELECT uuid, name, modelId
+                                            FROM RKFolder WHERE parentFolderUuid = ?""", [folder.uuid])
+        for uuid, name, folder_id in cursor:
             logger.debug("Got folder %s (%s)", name, uuid)
-            yield Folder(uuid, name)
+            yield Folder(uuid, name, folder_id=folder_id)
 
     def fetch_albums(self, folder):
         """Get folder contents
