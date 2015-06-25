@@ -146,7 +146,7 @@ class Library(object):
         logger.info("Fetch photos")
         cursor = self.library_db.cursor()
         cursor.execute("""SELECT v.uuid, v.name,
-                v.imageDate, v.exportImageChangeDate, v.exportMetadataChangeDate,
+                v.imageDate, v.lastModifiedDate, v.lastModifiedDate,
                 v.imageTimeZoneName, v.imageTimeZoneOffsetSeconds,
                 v.extendedDescription, v.isFavorite,
                 m.imagePath, v.adjustmentUuid,
