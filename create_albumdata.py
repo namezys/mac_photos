@@ -99,12 +99,12 @@ class AlbumData(object):
         return data
 
     def _photo(self, photo):
-        return {
+        data = {
             "Caption": photo.name or "",
             "Comment": photo.description or "",
             "GUID": photo.uuid,
             "Roll": 0, # TODO:
-            "Rating": 0, # TODO: Fetch rating
+            "Rating": 5 if photo.is_favorite else 0,
             "ImagePath": os.path.join(self.path, photo.path),
             "MediaType": "Image",
             "ModDateAsTimerInterval": photo.export_image_change_date_ts,
@@ -114,6 +114,9 @@ class AlbumData(object):
             "OriginalPath": os.path.join(self.path, photo.original),
             "ThumbPath": os.path.join(self.path, photo.thumbnails["mini"])
         }
+        if photo.is_favorite:
+            data["Flagged"] = True
+        return data
 
 
 def main():

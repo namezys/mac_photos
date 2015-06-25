@@ -54,7 +54,7 @@ class Library(object):
         return os.path.join("resources/modelresources", p1, p2, uuid, filename)
 
     def _photo(self, uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, photo_id,
-               change_ts, change_meta_ts, tz_offset):
+               change_ts, change_meta_ts, tz_offset, favorite):
         logger.debug("Got photo %s (%s)", name, uuid)
         orig_path = os.path.join("Masters", orig_path_db)
         if adjustment == UNADJUSTED:
@@ -65,7 +65,8 @@ class Library(object):
                      image_date_ts=data_ts, time_zone=date_tz, time_zone_offset=tz_offset,
                      path=path, original_path=orig_path,
                      thumbnails=thumbnails(orig_path_db, uuid), photo_id=photo_id,
-                     export_image_change_date_ts=change_ts, export_metadata_change_date_ts=change_meta_ts)
+                     export_image_change_date_ts=change_ts, export_metadata_change_date_ts=change_meta_ts,
+                     is_favorite=bool(favorite))
 
     def album(self, uuid):
         cursor = self.library_db.execute("SELECT name, modelId FROM RKAlbum WHERE uuid = ?", [uuid])
@@ -111,18 +112,18 @@ class Library(object):
     def fetch_photos(self):
         """Get photos
         """
-        logger.info("Fetch phtoos")
+        logger.info("Fetch photos")
         cursor = self.library_db.cursor()
         cursor.execute("""SELECT v.uuid, v.name,
                 v.imageDate, v.exportImageChangeDate, v.exportMetadataChangeDate,
                 v.imageTimeZoneName, v.imageTimeZoneOffsetSeconds,
-                v.extendedDescription,
+                v.extendedDescription, v.isFavorite,
                 m.imagePath, v.adjustmentUuid,
                 v.modelId
             FROM RKVersion AS v
             JOIN RKMaster AS m ON m.uuid = v.masterUuid
             WHERE NOT v.isInTrash""")
         for uuid, name, data_ts, change_ts, change_meta_ts, date_tz, tz_offset,\
-                description, orig_path_db, adjustment, photo_id in cursor:
+                description, favorite, orig_path_db, adjustment, photo_id in cursor:
             yield self._photo(uuid, name, data_ts, date_tz, description, orig_path_db, adjustment, photo_id,
-                              change_ts, change_meta_ts, tz_offset)
+                              change_ts, change_meta_ts, tz_offset, favorite)

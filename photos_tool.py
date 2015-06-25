@@ -12,6 +12,7 @@ DESCR = "Read photos database"
 def print_photo(photo):
     print "Photo: ", photo.name
     print "\tdescription:", photo.description
+    print "\tis favorite:", photo.is_favorite
     print "\tpath:", photo.path
     print "\toriginal:", photo.original
     print "\tthumbnails:"

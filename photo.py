@@ -35,6 +35,7 @@ class Photo(object):
                  path=None,
                  original_path=None,
                  description=None,
+                 is_favorite=None,
                  thumbnails=None,
                  photo_id=None,
                  time_zone=None,
@@ -47,6 +48,7 @@ class Photo(object):
         self.path = path
         self.original = original_path
         self.description = description
+        self.is_favorite = is_favorite
         self.thumbnails = thumbnails
         self.id = photo_id
 
