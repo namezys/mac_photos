@@ -35,11 +35,11 @@ def _iphoto_id(obj):
 
 
 class AlbumData(object):
-    def __init__(self, path, disable_rolls=None, disable_rating=None):
+    def __init__(self, path, disable_rolls=None, disable_rating=None, tmp_db=None):
         self.path = os.path.abspath(path)
 
         db_path = os.path.join(path, "database")
-        self.library = Library(db_path)
+        self.library = Library(db_path, tmp_db)
 
         self.data = copy.deepcopy(BASE)
         self.data[ARCHIVE_PATH] = self.path
@@ -162,7 +162,7 @@ class AlbumData(object):
 
     @property
     def _all_roll(self):
-        # TODO: I don't know what is it
+        """One fake event"""
         return {
             "RollID": self.all_roll_id,
             "ProjectUuid": "RBoLkXF0QxGHAqJTrs9p0Q",
@@ -179,6 +179,7 @@ def main():
     parser.add_argument("--path", "-p", required=True, help="Path to photos directory", default=".")
     parser.add_argument("--disable-rolls", action="store_true", help="Disable iPhoto events")
     parser.add_argument("--disable-rating", action="store_true", help="Disable 5-stars iPhoto rating for favorite")
+    parser.add_argument("--tmp-db", action="store_true", help="Create temp copy of db if it is locked")
 
     parser.add_argument("--log-level",
                         choices=['INFO', 'WARNING', 'DEBUG', 'ERROR', 'CRITICAL'],
@@ -191,7 +192,8 @@ def main():
     logging.basicConfig(format='%(message)s',
                         level=getattr(logging, args.log_level))
 
-    album_data = AlbumData(args.path, disable_rolls=args.disable_rolls, disable_rating=args.disable_rating)
+    album_data = AlbumData(args.path, disable_rolls=args.disable_rolls, disable_rating=args.disable_rating,
+                           tmp_db=args.tmp_db)
     album_data.build()
 
     if not args.force and os.path.exists(args.xml_path):

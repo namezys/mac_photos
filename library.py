@@ -2,6 +2,8 @@ __author__ = 'namezys'
 
 import os
 import sqlite3
+import shutil
+import tempfile
 
 from album import Album
 from photo import Photo
@@ -34,16 +36,31 @@ class Library(object):
     LIBRARY_DB = "Library.apdb"
     IMAGE_PROXIES = "ImageProxies.apdb"
 
-    def __init__(self, path):
+    def __init__(self, path, tmp_db):
         self.path = path
-        self.library_db = sqlite3.connect(os.path.join(self.path, self.LIBRARY_DB))
-        self.image_proxies_db = sqlite3.connect(os.path.join(self.path, self.IMAGE_PROXIES))
+        library_path = os.path.join(self.path, self.LIBRARY_DB)
+        image_proxies_path = os.path.join(self.path, self.IMAGE_PROXIES)
+        self.tmp_dir = None
+        if tmp_db:
+            self.tmp_dir = tempfile.mkdtemp()
+            tmp_library_path = os.path.join(self.tmp_dir, self.LIBRARY_DB)
+            tmp_image_proxies_path = os.path.join(self.tmp_dir, self.IMAGE_PROXIES)
+            shutil.copy(library_path, tmp_library_path)
+            shutil.copy(image_proxies_path, tmp_image_proxies_path)
+            library_path = tmp_library_path
+            image_proxies_path = tmp_image_proxies_path
+        self.library_db = sqlite3.connect(library_path)
+        self.image_proxies_db = sqlite3.connect(image_proxies_path)
 
         self.top_folder = self.folder(TOP_LEVEL_FOLDER)
         self.library_folder = self.folder(LIBRARY_FOLDER)
         self.all_photos_album = self.album("allPhotosAlbum")
         self.last_import_album = self.album("lastImportAlbum")
         self.favorites = self.album("favoritesAlbum")
+
+    def __del__(self):
+        if self.tmp_dir:
+            shutil.rmtree(self.tmp_dir)
 
     def get_adjustment(self, adjustment):
         cursor = self.image_proxies_db.cursor()
