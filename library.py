@@ -24,7 +24,7 @@ def thumbnails(path, uid):
     base = os.path.basename(path)
     name, ext = os.path.splitext(base)
     mini_thumbnail = "thumb_" + name + ext
-    thumbnail = "thumb_" + name + "_1024" + ext
+    thumbnail = name + "_1024" + ext
     return {
         'mini': os.path.join("Thumbnails/", os.path.dirname(path), uid, mini_thumbnail),
         'hd': os.path.join("Thumbnails/", os.path.dirname(path), uid, thumbnail),
