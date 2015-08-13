@@ -69,9 +69,10 @@ class AlbumData(object):
         self.data[IMAGES] = dict((str(p.id), self._photo(p)) for p in self.photos.values())
 
     def save_folder(self, folder, parent):
+        logger.debug("Save %s with parent %s", folder, parent)
         photo_ids = set()
         if folder != self.library.top_folder:
-            data = self._album_base(folder, [], parent=None)
+            data = self._album_base(folder, [], parent=parent)
             self.data[ALBUMS].append(data)
         parent = (folder if folder != self.library.top_folder else None)
         for sub_folder in self.library.fetch_subfolders(folder):
@@ -84,6 +85,7 @@ class AlbumData(object):
         return photo_ids
 
     def save_album(self, album, parent):
+        logger.debug("Save %s with parent %s", album, parent)
         photo_ids = set(self.library.fetch_album_photo_id_list(album))
         self.data[ALBUMS].append(self._album_base(album, photo_ids, parent=parent))
         return photo_ids
@@ -155,6 +157,7 @@ class AlbumData(object):
             "Rating": 5 if photo.is_favorite and not self.disable_rating else 0,
             "ImagePath": os.path.join(self.path, photo.path),
             "MediaType": "Image",
+            #"MediaType": "photo",
             "ModDateAsTimerInterval": photo.export_image_change_date_ts,
             "MetaModDateAsTimerInterval": photo.export_metadata_change_date_ts,
             "DateAsTimerInterval": photo.image_date_ts,
